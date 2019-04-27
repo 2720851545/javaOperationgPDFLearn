@@ -3,6 +3,7 @@ import org.icepdf.core.pobjects.Catalog;
 import org.icepdf.core.pobjects.Document;
 import org.icepdf.core.pobjects.PInfo;
 import org.icepdf.core.pobjects.Page;
+import org.icepdf.core.pobjects.graphics.text.PageText;
 import org.icepdf.core.util.GraphicsRenderingHints;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -11,11 +12,9 @@ import org.junit.Test;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.List;
 
@@ -35,6 +34,8 @@ public class ICEpdfTest {
     @BeforeClass
     public static void beforeClass() throws Exception{
         baseDir = System.getProperty("user.dir");
+//        使用网络文件(不是响应code 302重定向的)
+//        document.setFile();
         document.setFile("src/main/resources/demo.pdf");
 
         new File(file).mkdirs();
@@ -85,6 +86,20 @@ public class ICEpdfTest {
         }
     }
 
+    /**
+     * 获取每一页的文本内容
+     * @throws Exception
+     */
+    @Test
+    public void test4() throws Exception {
+        for (int i = 0; i < document.getNumberOfPages(); i++) {
+            PageText pageText1 = document.getPageViewText(i);
+//            使用getPageText可能会出现内容多余空格, 虽然getPageText更快
+//            PageText pageText = document.getPageText(i);
+
+            System.out.println(pageText1.toString());
+        }
+    }
 
 
     @AfterClass
