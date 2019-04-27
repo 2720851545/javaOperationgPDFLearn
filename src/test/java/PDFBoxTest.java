@@ -1,15 +1,22 @@
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.multipdf.Splitter;
+import org.apache.pdfbox.pdmodel.*;
+import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
+import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.font.*;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionJavaScript;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.AfterClass;
 import org.junit.Test;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @program: demo8
@@ -33,13 +40,12 @@ public class PDFBoxTest {
 
 
     /**
-     *
      * @throws Exception
      */
     @Test
     public void test1() throws Exception {
 //       加载文件(返回的是一个对象,不是原来对象)
-        PDDocument pdDocument= PDDocument.load(new File(pdfFile));
+        PDDocument pdDocument = PDDocument.load(new File(pdfFile));
 //      获取总页数
         System.out.println("pdDocument.getNumberOfPages() = " + pdDocument.getNumberOfPages());
 //      获取PDF规范版本
@@ -48,6 +54,7 @@ public class PDFBoxTest {
 
     /**
      * 创建一个空pdf
+     *
      * @throws IOException
      */
     @Test
@@ -63,6 +70,7 @@ public class PDFBoxTest {
 
     /**
      * 在原来pdf添加一个页面
+     *
      * @throws Exception
      */
     @Test
@@ -79,6 +87,7 @@ public class PDFBoxTest {
 
     /**
      * 删除第一页pdf
+     *
      * @throws IOException
      */
     @Test
@@ -94,6 +103,7 @@ public class PDFBoxTest {
 
     /**
      * 获取文档的基本信息
+     *
      * @throws Exception
      */
     @Test
@@ -168,6 +178,7 @@ public class PDFBoxTest {
 
     /**
      * pdf 创建个图片页面
+     *
      * @throws IOException
      */
     @Test
@@ -188,6 +199,113 @@ public class PDFBoxTest {
         document.close();
     }
 
+    /**
+     * 加密pdf
+     *
+     * @throws IOException
+     */
+    @Test
+    public void test9() throws IOException {
+        PDDocument document = PDDocument.load(new File(pdfFile));
 
+
+        document.protect(new StandardProtectionPolicy(
+                "大白", "123", new AccessPermission()));
+
+        document.save(newPDFFile);
+        document.close();
+    }
+
+    @Test
+    public void test10() throws IOException {
+        PDDocument document = PDDocument.load(new File(pdfFile));
+
+        document.getDocumentCatalog().
+                setOpenAction(new PDActionJavaScript("app.alert( {cMsg: 'this is an example', nIcon: 3,\"\n" +
+                        "         + \" nType: 0, cTitle: 'PDFBox Javascript example'} );"));
+
+        document.save(newPDFFile);
+
+        document.close();
+    }
+
+    /**
+     * 将每页分割
+     * @throws IOException
+     */
+    @Test
+    public void test11() throws IOException {
+        PDDocument document = PDDocument.load(new File(pdfFile));
+
+        Splitter splitter = new Splitter();
+        List<PDDocument> list = splitter.split(document);
+        int i = 1;
+        for (PDDocument pdDocument : list) {
+            pdDocument.save(newPDFFile + "." +  i + ".pdf");
+            i++;
+            pdDocument.close();
+        }
+
+        document.close();
+    }
+
+    /**
+     * 将多个文档合并
+     * @throws IOException
+     */
+    @Test
+    public void test12() throws IOException {
+        PDDocument document = PDDocument.load(new File(pdfFile));
+
+        PDFMergerUtility mergerUtility = new PDFMergerUtility();
+        mergerUtility.setDestinationFileName(newPDFFile);
+        for (int i = 1; i <= document.getNumberOfPages(); i++) {
+            mergerUtility.addSource(newPDFFile + "." +  i + ".pdf");
+        }
+        mergerUtility.mergeDocuments();
+
+        document.close();
+    }
+
+    /**
+     * 将页面转换成图片
+     * @throws IOException
+     */
+    @Test
+    public void test13() throws IOException {
+        PDDocument document = PDDocument.load(new File(pdfFile));
+
+        PDFRenderer renderer = new PDFRenderer(document);
+        for (int i = 0; i < document.getNumberOfPages(); i++) {
+            //第一页是0
+            BufferedImage image = renderer.renderImage(i);
+            ImageIO.write(image, "PNG", new File("target/1.png"));
+        }
+
+        document.close();
+    }
+
+    /**
+     * 在第一页画个实心矩形
+     * @throws IOException
+     */
+    @Test
+    public void test14() throws IOException {
+        PDDocument document = PDDocument.load(new File(pdfFile));
+        PDPageContentStream pdPageContentStream = new PDPageContentStream(
+                document, document.getPage(0));
+
+        pdPageContentStream.setNonStrokingColor(Color.BLACK);
+
+
+        pdPageContentStream.addRect(200, 650, 100, 100);
+        pdPageContentStream.fill();
+
+        pdPageContentStream.close();
+
+
+        document.save(newPDFFile);
+        document.close();
+    }
 
 }
