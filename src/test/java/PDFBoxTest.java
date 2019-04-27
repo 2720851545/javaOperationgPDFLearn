@@ -3,6 +3,8 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.*;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.AfterClass;
 import org.junit.Test;
 
@@ -142,7 +144,6 @@ public class PDFBoxTest {
 //        pdPageContentStream.newLine();
         pdPageContentStream.newLineAtOffset(0, 20);
         pdPageContentStream.showText("you love i");
-
 //        结束编写内容操作
         pdPageContentStream.endText();
 //        必须关闭(不然内容会写不进去)
@@ -151,6 +152,40 @@ public class PDFBoxTest {
         pdDocument.save(newPDFFile);
 
         pdDocument.close();
+    }
+
+
+    @Test
+    public void test7() throws IOException {
+        PDDocument document = PDDocument.load(new File(newPDFFile));
+
+        PDFTextStripper stripper = new PDFTextStripper();
+        //返回pdf的所有文本
+        System.out.println("stripper.getText(document) = " + stripper.getText(document));
+
+        document.close();
+    }
+
+    /**
+     * pdf 创建个图片页面
+     * @throws IOException
+     */
+    @Test
+    public void test8() throws IOException {
+        PDDocument document = new PDDocument();
+
+        PDPage page = new PDPage();
+        PDPageContentStream pdPageContentStream = new PDPageContentStream(document, page);
+        pdPageContentStream.drawImage(PDImageXObject.createFromFile(
+                System.getProperty("user.dir")
+                        + "/src/main/resources/demo.jpeg",
+                document), 0, 0);
+        pdPageContentStream.close();
+
+        document.addPage(page);
+
+        document.save(newPDFFile);
+        document.close();
     }
 
 
