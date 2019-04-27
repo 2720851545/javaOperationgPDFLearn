@@ -1,6 +1,8 @@
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.*;
 import org.junit.AfterClass;
 import org.junit.Test;
 
@@ -81,6 +83,7 @@ public class PDFBoxTest {
     public void test4() throws IOException {
         PDDocument pdDocument = PDDocument.load(new File(pdfFile));
 
+//        页面从0开始
         pdDocument.removePage(0);
 
         pdDocument.save(newPDFFile);
@@ -114,12 +117,42 @@ public class PDFBoxTest {
 
     @Test
     public void test6() throws Exception {
+        PDDocument pdDocument = PDDocument.load(new File(pdfFile));
 
+//        页面从0开始
+        PDPage page = pdDocument.getPage(0);
+
+//       创建内容流
+        PDPageContentStream pdPageContentStream = new PDPageContentStream(pdDocument, page);
+//        开始编写内容操作
+        pdPageContentStream.beginText();
+
+
+//        设置字体样式(必须先设置在添加内容)
+        pdPageContentStream.setFont(PDType1Font.HELVETICA_BOLD, 14);
+//        linux系统使用该命令
+//        pdPageContentStream.setFont(PDType0Font.load(pdDocument, new File("/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf")), 14);
+//        初始化内容添加位置
+        pdPageContentStream.newLineAtOffset(250, 500);
+//        添加中文可能会报错
+        pdPageContentStream.showText("i love you");
+//        新开一行(), 不然内容会在同一行(在上一次添加结束后面继续添加), (newLine会在上次开始的位置开始添加)
+//        newLine位置是上一次开始的位置
+//        newLineAtOffset位置是相对于上一次开始的位置
+//        pdPageContentStream.newLine();
+        pdPageContentStream.newLineAtOffset(0, 20);
+        pdPageContentStream.showText("you love i");
+
+//        结束编写内容操作
+        pdPageContentStream.endText();
+//        必须关闭(不然内容会写不进去)
+        pdPageContentStream.close();
+
+        pdDocument.save(newPDFFile);
+
+        pdDocument.close();
     }
 
 
-        @AfterClass
-    public static void afterClass(){
-    }
 
 }
